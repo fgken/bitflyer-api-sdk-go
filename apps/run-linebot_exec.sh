@@ -1,5 +1,7 @@
 #!/bin/sh
 
+cd `dirname $0`
+
 export BITFLYER_API_KEY='YOUR_KEY'
 export BITFLYER_API_SECRET='YOUR_SECRET'
 export LINE_USERID='YOUR_USERID'
