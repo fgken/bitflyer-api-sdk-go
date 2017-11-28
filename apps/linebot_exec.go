@@ -10,7 +10,7 @@ import (
 	"github.com/line/line-bot-sdk-go/linebot"
 )
 
-const POLLING_INTERVAL = 1*time.Minute
+const POLLING_INTERVAL = 10*time.Second
 
 func main() {
 	apiKey := os.Getenv("BITFLYER_API_KEY")
