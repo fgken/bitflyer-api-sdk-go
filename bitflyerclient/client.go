@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	APIEndpointBase = "https://api.bitflyer.jp/"
+	APIEndpointBase = "https://api.bitflyer.jp"
 )
 
 type methodType string
@@ -40,7 +40,7 @@ type ResponseGetExecutions struct {
 	Side           string
 	Price          float64
 	Size           float64
-	Commission     uint64
+	Commission     float64
 	Exec_date      string
 	//Exec_date time.Time
 	Child_order_acceptance_id string
