@@ -92,7 +92,6 @@ func (client *Client) do(api httpAPI, query url.Values) (*http.Response, error) 
 		mac.Write([]byte(text))
 		sign := hex.EncodeToString(mac.Sum(nil))
 
-		pp.Println(client.apiKey)
 		req.Header.Set("ACCESS-KEY", client.apiKey)
 		req.Header.Set("ACCESS-TIMESTAMP", timestamp)
 		req.Header.Set("ACCESS-SIGN", sign)
