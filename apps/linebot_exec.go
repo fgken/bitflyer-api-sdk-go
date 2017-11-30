@@ -42,8 +42,7 @@ func main() {
 		execs, err := bfclient.GetExecutions(page)
 		if err != nil {
 			log.Println(err)
-		}
-		if 0 < len(*execs) {
+		} else if 0 < len(*execs) {
 			for i := len(*execs)-1; 0 <= i; i-- {
 				msg := fmt.Sprintf("Date: %s\nPrice: %f (%s)\nSize: %f",
 					(*execs)[i].Exec_date, (*execs)[i].Price, (*execs)[i].Side,
