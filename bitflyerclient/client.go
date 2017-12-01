@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/k0kubun/pp"
 	"io/ioutil"
@@ -12,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -24,6 +26,20 @@ type methodType string
 const (
 	GET  methodType = "GET"
 	POST            = "POST"
+)
+
+type OrderType string
+
+const (
+	MARKET OrderType = "MARKET"
+	LIMIT  OrderType = "LIMIT"
+)
+
+type OrderSide string
+
+const (
+	BUY  OrderSide = "BUY"
+	SELL           = "SELL"
 )
 
 type httpAPI struct {
@@ -44,6 +60,18 @@ type ResponseGetExecutions struct {
 	Exec_date      string
 	//Exec_date time.Time
 	Child_order_acceptance_id string
+}
+
+var apiSendChildOrder = httpAPI{method: POST, path: "/v1/me/sendchildorder", isPrivate: true}
+
+type SendChildOrder struct {
+	Product_code     string  `json:"product_code"`
+	Child_order_type string  `json:"child_order_type"`
+	Side             string  `json:"side"`
+	Price            uint64  `json:"price"`
+	Size             float64 `json:"size"`
+	Minute_to_expire uint64  `json:"minute_to_expire"`
+	Time_in_force    string  `json:"time_in_force"`
 }
 
 type Client struct {
@@ -69,22 +97,22 @@ func New(apiKey, apiSecret string) (*Client, error) {
 	return c, nil
 }
 
-func (client *Client) do(api httpAPI, query url.Values) (*http.Response, error) {
+func (client *Client) do(api httpAPI, query url.Values, body string) (*http.Response, error) {
 	method := string(api.method)
 	apipath := api.path
 	if 0 < len(query) {
 		apipath += "?" + query.Encode()
 	}
 	url := client.endpointBase + apipath
-	body := ""
 
 	pp.Println(method, url)
-	req, err := http.NewRequest(method, url, nil)
+	req, err := http.NewRequest(method, url, strings.NewReader(body))
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
+	req.Header.Set("Content-Type", "application/json")
 	if api.isPrivate {
 		timestamp := strconv.FormatInt(time.Now().Unix(), 10)
 		text := timestamp + method + apipath + body
@@ -96,6 +124,8 @@ func (client *Client) do(api httpAPI, query url.Values) (*http.Response, error) 
 		req.Header.Set("ACCESS-TIMESTAMP", timestamp)
 		req.Header.Set("ACCESS-SIGN", sign)
 	}
+
+	pp.Println(req)
 
 	return client.httpClient.Do(req)
 }
@@ -113,7 +143,7 @@ func (client *Client) GetExecutions(page Page) (*[]ResponseGetExecutions, error)
 		queries.Add("After", strconv.FormatUint(page.After, 10))
 	}
 
-	resp, err := client.do(apiGetExecution, queries)
+	resp, err := client.do(apiGetExecution, queries, "")
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -134,4 +164,31 @@ func (client *Client) GetExecutions(page Page) (*[]ResponseGetExecutions, error)
 
 	pp.Println(result)
 	return &result, err
+}
+
+func (client *Client) SendChildOrder(orderType OrderType, orderSide OrderSide, size float64, price uint64) error {
+	bodyParam := SendChildOrder{Minute_to_expire: 43200, Time_in_force: "GTC"}
+	bodyParam.Product_code = "FX_BTC_JPY"
+	bodyParam.Child_order_type = string(orderType)
+	bodyParam.Side = string(orderSide)
+	bodyParam.Price = price
+	bodyParam.Size = size
+
+	bodyJson, err := json.Marshal(bodyParam)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	queries := url.Values{}
+	fmt.Println(string(bodyJson))
+	resp, err := client.do(apiSendChildOrder, queries, string(bodyJson))
+	if err != nil {
+		log.Println(err)
+		return err
+	} else if resp.StatusCode != http.StatusOK {
+		return errors.New(fmt.Sprintf("error: %s\n", resp.Status))
+	}
+
+	return nil
 }

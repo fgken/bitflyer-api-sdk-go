@@ -1,16 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
-	"fmt"
 	"time"
 
 	"github.com/fgken/bitflyer-api-sdk-go/bitflyerclient"
 	"github.com/line/line-bot-sdk-go/linebot"
 )
 
-const POLLING_INTERVAL = 10*time.Second
+const POLLING_INTERVAL = 10 * time.Second
 
 func main() {
 	apiKey := os.Getenv("BITFLYER_API_KEY")
@@ -43,7 +43,7 @@ func main() {
 		if err != nil {
 			log.Println(err)
 		} else if 0 < len(*execs) {
-			for i := len(*execs)-1; 0 <= i; i-- {
+			for i := len(*execs) - 1; 0 <= i; i-- {
 				msg := fmt.Sprintf("Date: %s\nPrice: %f (%s)\nSize: %f",
 					(*execs)[i].Exec_date, (*execs)[i].Price, (*execs)[i].Side,
 					(*execs)[i].Size)
