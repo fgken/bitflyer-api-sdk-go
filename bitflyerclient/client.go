@@ -64,7 +64,7 @@ type ResponseGetExecutions struct {
 
 var apiSendChildOrder = httpAPI{method: POST, path: "/v1/me/sendchildorder", isPrivate: true}
 
-type SendChildOrder struct {
+type RequestSendChildOrder struct {
 	Product_code     string  `json:"product_code"`
 	Child_order_type string  `json:"child_order_type"`
 	Side             string  `json:"side"`
@@ -72,6 +72,10 @@ type SendChildOrder struct {
 	Size             float64 `json:"size"`
 	Minute_to_expire uint64  `json:"minute_to_expire"`
 	Time_in_force    string  `json:"time_in_force"`
+}
+
+type ResponseSendChildOrder struct {
+    Child_order_acceptance_id   string
 }
 
 type Client struct {
@@ -125,7 +129,7 @@ func (client *Client) do(api httpAPI, query url.Values, body string) (*http.Resp
 		req.Header.Set("ACCESS-SIGN", sign)
 	}
 
-	pp.Println(req)
+	//pp.Println(req)
 
 	return client.httpClient.Do(req)
 }
@@ -166,8 +170,8 @@ func (client *Client) GetExecutions(page Page) (*[]ResponseGetExecutions, error)
 	return &result, err
 }
 
-func (client *Client) SendChildOrder(orderType OrderType, orderSide OrderSide, size float64, price uint64) error {
-	bodyParam := SendChildOrder{Minute_to_expire: 43200, Time_in_force: "GTC"}
+func (client *Client) SendChildOrder(orderType OrderType, orderSide OrderSide, size float64, price uint64) (*ResponseSendChildOrder, error) {
+	bodyParam := RequestSendChildOrder{Minute_to_expire: 43200, Time_in_force: "GTC"}
 	bodyParam.Product_code = "FX_BTC_JPY"
 	bodyParam.Child_order_type = string(orderType)
 	bodyParam.Side = string(orderSide)
@@ -177,7 +181,7 @@ func (client *Client) SendChildOrder(orderType OrderType, orderSide OrderSide, s
 	bodyJson, err := json.Marshal(bodyParam)
 	if err != nil {
 		log.Println(err)
-		return err
+		return nil, err
 	}
 
 	queries := url.Values{}
@@ -185,10 +189,24 @@ func (client *Client) SendChildOrder(orderType OrderType, orderSide OrderSide, s
 	resp, err := client.do(apiSendChildOrder, queries, string(bodyJson))
 	if err != nil {
 		log.Println(err)
-		return err
+		return nil, err
 	} else if resp.StatusCode != http.StatusOK {
-		return errors.New(fmt.Sprintf("error: %s\n", resp.Status))
+		return nil, errors.New(fmt.Sprintf("error: %s\n", resp.Status))
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println(err)
+		return nil, err
 	}
 
-	return nil
+	fmt.Println(string(body))
+	var result ResponseSendChildOrder
+	if err := json.Unmarshal(body, &result); err != nil {
+		log.Println(err)
+	}
+
+	pp.Println(result)
+	return &result, err
 }

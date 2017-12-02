@@ -18,8 +18,9 @@ func main() {
 
 	order := bitflyerclient.MARKET
 	side := bitflyerclient.BUY
-	err = bfclient.SendChildOrder(order, side, 0.001, 0)
+	resp, err := bfclient.SendChildOrder(order, side, 0.001, 0)
 	if err != nil {
 		log.Println(err)
 	}
+    log.Println(resp)
 }
