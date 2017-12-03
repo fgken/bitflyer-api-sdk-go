@@ -9,8 +9,8 @@ import (
 )
 
 func main() {
-	apiKey := os.Getenv("API_KEY")
-	apiSecret := os.Getenv("API_SECRET")
+	apiKey := os.Getenv("BITFLYER_API_KEY")
+	apiSecret := os.Getenv("BITFLYER_API_SECRET")
 
 	bfclient, err := bitflyerclient.New(apiKey, apiSecret)
 	if err != nil {
