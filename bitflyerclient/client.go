@@ -134,6 +134,34 @@ func (client *Client) do(api httpAPI, query url.Values, body string) (*http.Resp
 	return client.httpClient.Do(req)
 }
 
+func (client *Client) GetExecutionsById(acceptanceId string) (*[]ResponseGetExecutions, error) {
+	queries := url.Values{}
+	queries.Add("product_code", "FX_BTC_JPY")
+	queries.Add("child_order_acceptance_id", acceptanceId)
+
+	resp, err := client.do(apiGetExecution, queries, "")
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	//fmt.Println(string(body))
+	result := make([]ResponseGetExecutions, 0)
+	if err := json.Unmarshal([]byte(body), &result); err != nil {
+		log.Println(err)
+	}
+
+	pp.Println(result)
+	return &result, err
+}
+
 func (client *Client) GetExecutions(page Page) (*[]ResponseGetExecutions, error) {
 	queries := url.Values{}
 	queries.Add("product_code", "FX_BTC_JPY")
@@ -160,7 +188,7 @@ func (client *Client) GetExecutions(page Page) (*[]ResponseGetExecutions, error)
 		return nil, err
 	}
 
-	fmt.Println(string(body))
+	//fmt.Println(string(body))
 	result := make([]ResponseGetExecutions, 0)
 	if err := json.Unmarshal([]byte(body), &result); err != nil {
 		log.Println(err)
@@ -185,7 +213,7 @@ func (client *Client) SendChildOrder(orderType OrderType, orderSide OrderSide, s
 	}
 
 	queries := url.Values{}
-	fmt.Println(string(bodyJson))
+	//fmt.Println(string(bodyJson))
 	resp, err := client.do(apiSendChildOrder, queries, string(bodyJson))
 	if err != nil {
 		log.Println(err)
@@ -201,7 +229,7 @@ func (client *Client) SendChildOrder(orderType OrderType, orderSide OrderSide, s
 		return nil, err
 	}
 
-	fmt.Println(string(body))
+	//fmt.Println(string(body))
 	var result ResponseSendChildOrder
 	if err := json.Unmarshal(body, &result); err != nil {
 		log.Println(err)
