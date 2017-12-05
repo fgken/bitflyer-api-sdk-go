@@ -74,8 +74,21 @@ type RequestSendChildOrder struct {
 	Time_in_force    string  `json:"time_in_force"`
 }
 
+var apiGetBoard = httpAPI{method: GET, path: "/v1/getboard", isPrivate: false}
+
 type ResponseSendChildOrder struct {
     Child_order_acceptance_id   string
+}
+
+type BoardOrder struct {
+    Price   float64
+    Size    float64
+}
+
+type ResponseGetBoard struct {
+    Mid_price   float64
+    Bids        []BoardOrder
+    Asks        []BoardOrder
 }
 
 type Client struct {
@@ -236,5 +249,32 @@ func (client *Client) SendChildOrder(orderType OrderType, orderSide OrderSide, s
 	}
 
 	pp.Println(result)
+	return &result, err
+}
+
+func (client *Client) GetBoard() (*ResponseGetBoard, error) {
+	queries := url.Values{}
+	queries.Add("product_code", "FX_BTC_JPY")
+
+	resp, err := client.do(apiGetBoard, queries, "")
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+    pp.Println(string(body))
+	var result ResponseGetBoard
+	if err := json.Unmarshal([]byte(body), &result); err != nil {
+		log.Println(err)
+        return nil, err
+	}
+
 	return &result, err
 }
