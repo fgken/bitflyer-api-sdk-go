@@ -77,18 +77,18 @@ type RequestSendChildOrder struct {
 var apiGetBoard = httpAPI{method: GET, path: "/v1/getboard", isPrivate: false}
 
 type ResponseSendChildOrder struct {
-    Child_order_acceptance_id   string
+	Child_order_acceptance_id string
 }
 
 type BoardOrder struct {
-    Price   float64
-    Size    float64
+	Price float64
+	Size  float64
 }
 
 type ResponseGetBoard struct {
-    Mid_price   float64
-    Bids        []BoardOrder
-    Asks        []BoardOrder
+	Mid_price float64
+	Bids      []BoardOrder
+	Asks      []BoardOrder
 }
 
 type Client struct {
@@ -269,11 +269,11 @@ func (client *Client) GetBoard() (*ResponseGetBoard, error) {
 		return nil, err
 	}
 
-    pp.Println(string(body))
+	pp.Println(string(body))
 	var result ResponseGetBoard
 	if err := json.Unmarshal([]byte(body), &result); err != nil {
 		log.Println(err)
-        return nil, err
+		return nil, err
 	}
 
 	return &result, err

@@ -21,17 +21,17 @@ func main() {
 		log.Println(err)
 	}
 
-    for i, bids := range board.Bids {
-        if 10 < bids.Size {
-            log.Printf("[%d] Price: %f, Size: %f\n",
-                i, bids.Price, bids.Size)
-        }
-    }
-    log.Println("-----------")
-    for i, asks := range board.Asks {
-        if 10 < asks.Size {
-            log.Printf("[%d] Price: %f, Size: %f\n",
-                i, asks.Price, asks.Size)
-        }
-    }
+	for i, bids := range board.Bids {
+		if 10 < bids.Size {
+			log.Printf("[%d] Price: %f, Size: %f\n",
+				i, bids.Price, bids.Size)
+		}
+	}
+	log.Println("-----------")
+	for i, asks := range board.Asks {
+		if 10 < asks.Size {
+			log.Printf("[%d] Price: %f, Size: %f\n",
+				i, asks.Price, asks.Size)
+		}
+	}
 }
