@@ -38,9 +38,20 @@ const (
 type OrderSide string
 
 const (
-	BUY  OrderSide = "BUY"
-	SELL           = "SELL"
+	BUY       OrderSide = "BUY"
+	SELL                = "SELL"
+	SIDE_NONE           = ""
 )
+
+func oppositeSide(side OrderSide) OrderSide {
+	switch side {
+	case BUY:
+		return SELL
+	case SELL:
+		return BUY
+	}
+	panic(fmt.Sprintf("Unexpedted OrderSide: %v", side))
+}
 
 type httpAPI struct {
 	method    methodType
@@ -74,11 +85,34 @@ type RequestSendChildOrder struct {
 	Time_in_force    string  `json:"time_in_force"`
 }
 
-var apiGetBoard = httpAPI{method: GET, path: "/v1/getboard", isPrivate: false}
-
 type ResponseSendChildOrder struct {
 	Child_order_acceptance_id string
 }
+
+var apiSendParentOrder = httpAPI{method: POST, path: "/v1/me/sendparentorder", isPrivate: true}
+
+type ParentOrder struct {
+	Product_code   string  `json:"product_code"`
+	Condition_type string  `json:"condition_type"`
+	Side           string  `json:"side"`
+	Size           float64 `json:"size"`
+	Price          float64 `json:"price"`
+	Trigger_price  float64 `json:"trigger_price"`
+	Offset         uint64  `json:"offset"`
+}
+
+type RequestSendParentOrder struct {
+	Order_method     string        `json:"order_method"`
+	Minute_to_expire uint64        `json:"minute_to_expire"`
+	Time_in_force    string        `json:"time_in_force"`
+	Parameters       []ParentOrder `json:"parameters"`
+}
+
+type ResponseSendParentOrder struct {
+	Parent_order_acceptance_id string
+}
+
+var apiGetBoard = httpAPI{method: GET, path: "/v1/getboard", isPrivate: false}
 
 type BoardOrder struct {
 	Price float64
@@ -122,7 +156,7 @@ func (client *Client) do(api httpAPI, query url.Values, body string) (*http.Resp
 	}
 	url := client.endpointBase + apipath
 
-	pp.Println(method, url)
+	//pp.Println(method, url)
 	req, err := http.NewRequest(method, url, strings.NewReader(body))
 	if err != nil {
 		log.Println(err)
@@ -252,6 +286,65 @@ func (client *Client) SendChildOrder(orderType OrderType, orderSide OrderSide, s
 	return &result, err
 }
 
+func (client *Client) SendParentOrder_IFDOCO(orderSide OrderSide, size float64, entryPrice, limitPrice, stopPrice float64) (*ResponseSendParentOrder, error) {
+	var bodyParam RequestSendParentOrder
+	bodyParam.Order_method = "IFDOCO"
+	bodyParam.Minute_to_expire = 43200
+	bodyParam.Time_in_force = "GTC"
+
+	var order ParentOrder
+
+	/* ENTRY(LIMIT) */
+	order.Product_code = "FX_BTC_JPY"
+	order.Condition_type = "LIMIT"
+	order.Side = string(orderSide)
+	order.Price = entryPrice
+	order.Size = size
+	bodyParam.Parameters = append(bodyParam.Parameters, order)
+
+	/* LIMIT ORDER */
+	order.Condition_type = "LIMIT"
+	order.Side = string(oppositeSide(orderSide))
+	order.Price = limitPrice
+	bodyParam.Parameters = append(bodyParam.Parameters, order)
+
+	/* STOP ORDER */
+	order.Condition_type = "STOP"
+	order.Side = string(oppositeSide(orderSide))
+	order.Price = 0
+	order.Trigger_price = stopPrice
+	bodyParam.Parameters = append(bodyParam.Parameters, order)
+
+	bodyJson, err := json.Marshal(bodyParam)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	//fmt.Println(string(bodyJson))
+	resp, err := client.do(apiSendParentOrder, url.Values{}, string(bodyJson))
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	} else if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(fmt.Sprintf("error: %s\n", resp.Status))
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	var result ResponseSendParentOrder
+	if err := json.Unmarshal(body, &result); err != nil {
+		log.Println(err)
+	}
+
+	return &result, err
+}
+
 func (client *Client) GetBoard() (*ResponseGetBoard, error) {
 	queries := url.Values{}
 	queries.Add("product_code", "FX_BTC_JPY")
@@ -269,7 +362,7 @@ func (client *Client) GetBoard() (*ResponseGetBoard, error) {
 		return nil, err
 	}
 
-	pp.Println(string(body))
+	//pp.Println(string(body))
 	var result ResponseGetBoard
 	if err := json.Unmarshal([]byte(body), &result); err != nil {
 		log.Println(err)
