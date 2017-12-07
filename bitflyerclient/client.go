@@ -245,6 +245,57 @@ func (client *Client) GetExecutions(page Page) (*[]ResponseGetExecutions, error)
 	return &result, err
 }
 
+type ResponseGetChildOrders struct {
+	Id                        uint64
+	Child_order_id            string
+	Product_code              string
+	Side                      string
+	Child_order_type          string
+	Price                     float64
+	Average_price             float64
+	Size                      float64
+	Child_order_state         string
+	Expire_date               string
+	Child_order_date          string
+//	Expire_date               time.Time
+//	Child_order_date          time.Time
+	Child_order_acceptance_id string
+	Outstanding_size          float64
+	Cancel_size               float64
+	Executed_size             float64
+	Total_commission          float64
+}
+
+var apiGetChildOrders = httpAPI{method: GET, path: "/v1/me/getchildorders", isPrivate: true}
+
+func (client *Client) GetChildOrdersByParentId(parentId string) (*[]ResponseGetChildOrders, error) {
+	queries := url.Values{}
+	queries.Add("product_code", "FX_BTC_JPY")
+	queries.Add("parent_order_id", parentId)
+
+	resp, err := client.do(apiGetChildOrders, queries, "")
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	//fmt.Println(string(body))
+	result := make([]ResponseGetChildOrders, 0)
+	if err := json.Unmarshal([]byte(body), &result); err != nil {
+		log.Println(err)
+	}
+
+	//pp.Println(result)
+	return &result, err
+}
+
 func (client *Client) SendChildOrder(orderType OrderType, orderSide OrderSide, size float64, price uint64) (*ResponseSendChildOrder, error) {
 	bodyParam := RequestSendChildOrder{Minute_to_expire: 43200, Time_in_force: "GTC"}
 	bodyParam.Product_code = "FX_BTC_JPY"
