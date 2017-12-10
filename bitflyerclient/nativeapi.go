@@ -55,6 +55,46 @@ func (bt *BitflyerTime) UnmarshalJSON(b []byte) (err error) {
 }
 
 /* ==============================
+ *  Public API
+ * ==============================
+ */
+
+/* --- Get Order Book (Board) --- */
+type BoardOrder struct {
+	Price float64
+	Size  float64
+}
+
+type GetBoardResponse struct {
+	Mid_price float64
+	Bids      []BoardOrder
+	Asks      []BoardOrder
+}
+
+func (client *Client) GetBoard() (*GetBoardResponse, error) {
+	reqParam := requestParam{
+		path:      "/v1/getboard",
+		method:    http.MethodGet,
+		isPrivate: false,
+	}
+	queries := url.Values{}
+	queries.Add("product_code", string(client.productCode))
+	reqParam.queryString = queries.Encode()
+
+	respBody, err := client.do(reqParam)
+	if err != nil {
+		return nil, err
+	}
+
+	var result GetBoardResponse
+	if err := json.Unmarshal(*respBody, &result); err != nil {
+		log.Printf("error: %v\n", err)
+	}
+
+	return &result, err
+}
+
+/* ==============================
  *  Trading API
  * ==============================
  */
