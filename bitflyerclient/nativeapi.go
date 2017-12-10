@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	//    "github.com/k0kubun/pp"
+	//"github.com/k0kubun/pp"
 )
 
 /* ==============================
@@ -211,7 +211,7 @@ type ParentOrder struct {
 	Size           float64 `json:"size"`
 	Price          float64 `json:"price"`
 	Trigger_price  float64 `json:"trigger_price"`
-	Offset         uint64  `json:"offset"`
+	Offset         float64 `json:"offset"`
 }
 
 type SendParentOrderParam struct {
@@ -264,7 +264,7 @@ func (client *Client) SendParentOrder(param *SendParentOrderParam) (*SendParentO
 	return &result, err
 }
 
-/* --- List Parent Order --- */
+/* --- List Parent Orders --- */
 type GetParentOrdersParam struct {
 	Product_code       string
 	Page               Pagenation
@@ -322,4 +322,45 @@ func (client *Client) GetParentOrders(param *GetParentOrdersParam) ([]GetParentO
 	return result, err
 }
 
-/* --- List Child Order --- */
+/* --- Get Parent Order Detail --- */
+type GetParentOrderParam struct {
+	Parent_order_acceptance_id string
+	Parent_order_id            string /* should not use */
+}
+
+func NewGetParentOrderParam() *GetParentOrderParam {
+	var param GetParentOrderParam
+	return &param
+}
+
+type GetParentOrderResponse struct {
+	Id                         uint64
+	Parent_order_acceptance_id string
+	Parent_order_id            string /* should not use */
+	Order_method               string
+	Minute_to_expire           uint64
+	Parameters                 []ParentOrder
+}
+
+func (client *Client) GetParentOrder(param *GetParentOrderParam) (*GetParentOrderResponse, error) {
+	reqParam := requestParam{
+		path:      "/v1/me/getparentorder",
+		method:    http.MethodGet,
+		isPrivate: true,
+	}
+	queries := url.Values{}
+	queries.Add("parent_order_acceptance_id", param.Parent_order_acceptance_id)
+	reqParam.queryString = queries.Encode()
+
+	respBody, err := client.do(reqParam)
+	if err != nil {
+		return nil, err
+	}
+
+	var result GetParentOrderResponse
+	if err := json.Unmarshal(*respBody, &result); err != nil {
+		log.Printf("error: %v\n", err)
+	}
+
+	return &result, err
+}
