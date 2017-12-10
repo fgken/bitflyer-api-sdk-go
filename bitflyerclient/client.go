@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -19,6 +20,16 @@ const (
 const (
 	BTC_JPY    = "BTC_JPY"
 	FX_BTC_JPY = "FX_BTC_JPY"
+)
+
+const (
+	MARKET = "MARKET"
+	LIMIT  = "LIMIT"
+)
+
+const (
+	BUY  = "BUY"
+	SELL = "SELL"
 )
 
 type Client struct {
@@ -89,7 +100,8 @@ func (client *Client) do(param requestParam) (*[]byte, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("error: %v(%v) %v", resp.Status, resp.StatusCode, string(respBody))
+		err = fmt.Errorf("error: %v(%v) %v", resp.Status, resp.StatusCode, string(respBody))
+		log.Printf(err.Error())
 		return nil, err
 	}
 

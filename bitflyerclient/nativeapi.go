@@ -15,42 +15,28 @@ import (
  * ==============================
  */
 
-/* --- Page Nation --- */
-type Page struct {
-	count  int64
-	before int64
-	after  int64
+/* --- Pagenation --- */
+type Pagenation struct {
+	Count  int64
+	Before int64
+	After  int64
 }
 
-func NewPage() *Page {
-	return &Page{
-		count:  -1,
-		before: -1,
-		after:  -1,
+func (page Pagenation) init() {
+	page.Count = -1
+	page.Before = -1
+	page.After = -1
+}
+
+func addPagenation(values url.Values, page Pagenation) url.Values {
+	if 0 <= page.Count {
+		values.Add("count", strconv.FormatInt(page.Count, 10))
 	}
-}
-
-func (page *Page) SetCount(count int64) {
-	page.count = count
-}
-
-func (page *Page) SetBefore(before int64) {
-	page.before = before
-}
-
-func (page *Page) SetAfter(after int64) {
-	page.after = after
-}
-
-func addPage(values url.Values, page *Page) url.Values {
-	if 0 <= page.count {
-		values.Add("count", strconv.FormatInt(page.count, 10))
+	if 0 <= page.Before {
+		values.Add("before", strconv.FormatInt(page.Before, 10))
 	}
-	if 0 <= page.before {
-		values.Add("before", strconv.FormatInt(page.before, 10))
-	}
-	if 0 <= page.after {
-		values.Add("after", strconv.FormatInt(page.after, 10))
+	if 0 <= page.After {
+		values.Add("after", strconv.FormatInt(page.After, 10))
 	}
 	return values
 }
@@ -74,7 +60,17 @@ func (bt *BitflyerTime) UnmarshalJSON(b []byte) (err error) {
  */
 
 /* --- Execution History --- */
-type ResponseGetExecutions struct {
+type GetExecutionsParam struct {
+	Page Pagenation
+}
+
+func NewGetExecutionsParam() *GetExecutionsParam {
+	var param GetExecutionsParam
+	param.Page.init()
+	return &param
+}
+
+type GetExecutionsResponse struct {
 	Id                        uint64
 	Child_order_id            string
 	Side                      string
@@ -85,25 +81,75 @@ type ResponseGetExecutions struct {
 	Child_order_acceptance_id string
 }
 
-func (client *Client) GetExecutions(page *Page) ([]ResponseGetExecutions, error) {
-	var param requestParam
-	param.path = "/v1/me/getexecutions"
-	param.method = http.MethodGet
-	param.isPrivate = true
+func (client *Client) GetExecutions(param *GetExecutionsParam) ([]GetExecutionsResponse, error) {
+	var reqParam requestParam
+	reqParam.path = "/v1/me/getexecutions"
+	reqParam.method = http.MethodGet
+	reqParam.isPrivate = true
 	queries := url.Values{}
 	queries.Add("product_code", string(client.productCode))
-	queries = addPage(queries, page)
-	param.queryString = queries.Encode()
+	queries = addPagenation(queries, param.Page)
+	reqParam.queryString = queries.Encode()
 
-	body, err := client.do(param)
+	respBody, err := client.do(reqParam)
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]ResponseGetExecutions, 0)
-	if err := json.Unmarshal(*body, &result); err != nil {
+	result := make([]GetExecutionsResponse, 0)
+	if err := json.Unmarshal(*respBody, &result); err != nil {
 		log.Printf("error: %v\n", err)
 	}
 
 	return result, err
+}
+
+/* --- Send a New Order --- */
+type SendChildOrderParam struct {
+	Product_code     string  `json:"product_code"`
+	Child_order_type string  `json:"child_order_type"`
+	Side             string  `json:"side"`
+	Price            float64 `json:"price"`
+	Size             float64 `json:"size"`
+	Minute_to_expire uint64  `json:"minute_to_expire"`
+	Time_in_force    string  `json:"time_in_force"`
+}
+
+func NewSendChildOrderParam() *SendChildOrderParam {
+	var param SendChildOrderParam
+	param.Minute_to_expire = 43200
+	param.Time_in_force = "GTC"
+	return &param
+}
+
+type SendChildOrderResponse struct {
+	Child_order_acceptance_id string
+}
+
+func (client *Client) SendChildOrder(param *SendChildOrderParam) (*SendChildOrderResponse, error) {
+	param.Product_code = client.productCode
+	var reqParam requestParam
+	reqParam.path = "/v1/me/sendchildorder"
+	reqParam.method = http.MethodPost
+	reqParam.isPrivate = true
+	reqParam.queryString = ""
+
+	bodyJson, err := json.Marshal(param)
+	if err != nil {
+		log.Printf("error: %v\n", err)
+		return nil, err
+	}
+
+	reqParam.body = string(bodyJson)
+	respBody, err := client.do(reqParam)
+	if err != nil {
+		return nil, err
+	}
+
+	var result SendChildOrderResponse
+	if err := json.Unmarshal(*respBody, &result); err != nil {
+		log.Printf("error: %v\n", err)
+	}
+
+	return &result, err
 }
