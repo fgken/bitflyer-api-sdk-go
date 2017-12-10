@@ -35,6 +35,15 @@ const (
 	SELL = "SELL"
 )
 
+/* Parent Order State */
+const (
+	ACTIVE    = "ACTIVE"
+	COMPLETED = "COMPLETED"
+	CANCELED  = "CANCELED"
+	EXPIRED   = "EXPIRED"
+	REJECTED  = "REJECTED"
+)
+
 type Client struct {
 	apiKey       string
 	apiSecret    string

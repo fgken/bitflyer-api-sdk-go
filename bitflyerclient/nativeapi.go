@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	//    "github.com/k0kubun/pp"
 )
 
 /* ==============================
@@ -22,7 +23,7 @@ type Pagenation struct {
 	After  int64
 }
 
-func (page Pagenation) init() {
+func (page *Pagenation) init() {
 	page.Count = -1
 	page.Before = -1
 	page.After = -1
@@ -262,3 +263,63 @@ func (client *Client) SendParentOrder(param *SendParentOrderParam) (*SendParentO
 
 	return &result, err
 }
+
+/* --- List Parent Order --- */
+type GetParentOrdersParam struct {
+	Product_code       string
+	Page               Pagenation
+	Parent_order_state string
+}
+
+func NewGetParentOrdersParam() *GetParentOrdersParam {
+	var param GetParentOrdersParam
+	param.Page.init()
+	return &param
+}
+
+type GetParentOrdersResponse struct {
+	Id                         uint64
+	Parent_order_id            string
+	Product_code               string
+	Side                       string
+	Parent_order_type          string
+	Price                      float64
+	Size                       float64
+	Parent_order_state         string
+	Expire_date                time.Time
+	Parent_order_date          time.Time
+	Parent_order_acceptance_id string
+	Outstanding_size           float64
+	Cancel_size                float64
+	Executed_size              float64
+	total_commission           float64
+}
+
+func (client *Client) GetParentOrders(param *GetParentOrdersParam) ([]GetParentOrdersResponse, error) {
+	reqParam := requestParam{
+		path:      "/v1/me/getexecutions",
+		method:    http.MethodGet,
+		isPrivate: true,
+	}
+	queries := url.Values{}
+	queries.Add("product_code", string(client.productCode))
+	queries = addPagenation(queries, param.Page)
+	if param.Parent_order_state != "" {
+		queries.Add("parent_order_state", param.Parent_order_state)
+	}
+	reqParam.queryString = queries.Encode()
+
+	respBody, err := client.do(reqParam)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]GetParentOrdersResponse, 0)
+	if err := json.Unmarshal(*respBody, &result); err != nil {
+		log.Printf("error: %v\n", err)
+	}
+
+	return result, err
+}
+
+/* --- List Child Order --- */
