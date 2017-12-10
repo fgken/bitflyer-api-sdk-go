@@ -286,8 +286,8 @@ type GetParentOrdersResponse struct {
 	Price                      float64
 	Size                       float64
 	Parent_order_state         string
-	Expire_date                time.Time
-	Parent_order_date          time.Time
+	Expire_date                BitflyerTime
+	Parent_order_date          BitflyerTime
 	Parent_order_acceptance_id string
 	Outstanding_size           float64
 	Cancel_size                float64
@@ -297,7 +297,7 @@ type GetParentOrdersResponse struct {
 
 func (client *Client) GetParentOrders(param *GetParentOrdersParam) ([]GetParentOrdersResponse, error) {
 	reqParam := requestParam{
-		path:      "/v1/me/getexecutions",
+		path:      "/v1/me/getparentorders",
 		method:    http.MethodGet,
 		isPrivate: true,
 	}

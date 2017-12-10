@@ -31,4 +31,10 @@ func main() {
 		log.Println(err)
 	}
 	pp.Println(orders)
+
+	orders, err = bfclient.GetParentOrdersByState(bfapi.ACTIVE)
+	if err != nil {
+		log.Println(err)
+	}
+	pp.Println(orders)
 }

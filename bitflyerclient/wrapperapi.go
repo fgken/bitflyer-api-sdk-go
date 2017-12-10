@@ -79,3 +79,9 @@ func (client *Client) SendParentOrderIFDOCO(conditionType, side string, entry, l
 
 	return client.SendParentOrder(param)
 }
+
+func (client *Client) GetParentOrdersByState(state string) ([]GetParentOrdersResponse, error) {
+	param := NewGetParentOrdersParam()
+	param.Parent_order_state = state
+	return client.GetParentOrders(param)
+}
