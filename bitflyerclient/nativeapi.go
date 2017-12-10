@@ -112,7 +112,7 @@ func NewGetExecutionsParam() *GetExecutionsParam {
 }
 
 type GetExecutionsResponse struct {
-	Id                        uint64
+	Id                        int64
 	Child_order_id            string
 	Side                      string
 	Price                     float64
@@ -278,7 +278,7 @@ func NewGetParentOrdersParam() *GetParentOrdersParam {
 }
 
 type GetParentOrdersResponse struct {
-	Id                         uint64
+	Id                         int64
 	Parent_order_id            string
 	Product_code               string
 	Side                       string
@@ -334,7 +334,7 @@ func NewGetParentOrderParam() *GetParentOrderParam {
 }
 
 type GetParentOrderResponse struct {
-	Id                         uint64
+	Id                         int64
 	Parent_order_acceptance_id string
 	Parent_order_id            string /* should not use */
 	Order_method               string

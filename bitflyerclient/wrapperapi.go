@@ -1,5 +1,9 @@
 package bitflyerclient
 
+import (
+	"fmt"
+)
+
 func (client *Client) SendChildOrderMarket(side string, size float64) (*SendChildOrderResponse, error) {
 	param := NewSendChildOrderParam()
 	param.Child_order_type = MARKET
@@ -84,4 +88,23 @@ func (client *Client) GetParentOrdersByState(state string) ([]GetParentOrdersRes
 	param := NewGetParentOrdersParam()
 	param.Parent_order_state = state
 	return client.GetParentOrders(param)
+}
+
+func (client *Client) GetParentOrderState(id string) (string, error) {
+	param := NewGetParentOrdersParam()
+	for _, count := range []int64{100, 400, 1000} {
+		param.Page.Count = count
+		orders, err := client.GetParentOrders(param)
+		if err != nil {
+			return "", err
+		}
+		for _, order := range orders {
+			if order.Parent_order_acceptance_id == id {
+				return order.Parent_order_state, nil
+			}
+		}
+		param.Page.Before = orders[len(orders)-1].Id
+	}
+
+	return "", fmt.Errorf("not found parent id: %v", id)
 }
