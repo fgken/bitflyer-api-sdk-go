@@ -55,11 +55,11 @@ func (bt *BitflyerTime) UnmarshalJSON(b []byte) (err error) {
 }
 
 /* ==============================
- *  Trade API
+ *  Trading API
  * ==============================
  */
 
-/* --- Execution History --- */
+/* --- Get Execution History --- */
 type GetExecutionsParam struct {
 	Page Pagenation
 }

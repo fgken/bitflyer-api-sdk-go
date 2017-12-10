@@ -32,4 +32,16 @@ func main() {
 		log.Println(err)
 	}
 	log.Println(resp)
+
+	bfclient.SendChildOrderMarket(bfapi.BUY, 0.001)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println(resp)
+
+	bfclient.SendChildOrderLimit(bfapi.BUY, 1000000, 0.001)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println(resp)
 }
