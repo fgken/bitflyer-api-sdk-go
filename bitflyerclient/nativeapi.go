@@ -82,10 +82,11 @@ type GetExecutionsResponse struct {
 }
 
 func (client *Client) GetExecutions(param *GetExecutionsParam) ([]GetExecutionsResponse, error) {
-	var reqParam requestParam
-	reqParam.path = "/v1/me/getexecutions"
-	reqParam.method = http.MethodGet
-	reqParam.isPrivate = true
+	reqParam := requestParam{
+		path:      "/v1/me/getexecutions",
+		method:    http.MethodGet,
+		isPrivate: true,
+	}
 	queries := url.Values{}
 	queries.Add("product_code", string(client.productCode))
 	queries = addPagenation(queries, param.Page)
@@ -147,6 +148,74 @@ func (client *Client) SendChildOrder(param *SendChildOrderParam) (*SendChildOrde
 	}
 
 	var result SendChildOrderResponse
+	if err := json.Unmarshal(*respBody, &result); err != nil {
+		log.Printf("error: %v\n", err)
+	}
+
+	return &result, err
+}
+
+/* Submit New Parent Order (Special Order) */
+const (
+	SIMPLE = "SIMPLE"
+	IFD    = "IFD"
+	OCO    = "OCO"
+	IFDOCO = "IFDOCO"
+)
+
+type ParentOrder struct {
+	Product_code   string  `json:"product_code"`
+	Condition_type string  `json:"condition_type"`
+	Side           string  `json:"side"`
+	Size           float64 `json:"size"`
+	Price          float64 `json:"price"`
+	Trigger_price  float64 `json:"trigger_price"`
+	Offset         uint64  `json:"offset"`
+}
+
+type SendParentOrderParam struct {
+	Order_method     string        `json:"order_method"`
+	Minute_to_expire uint64        `json:"minute_to_expire"`
+	Time_in_force    string        `json:"time_in_force"`
+	Parameters       []ParentOrder `json:"parameters"`
+}
+
+func NewSendParentOrderParam() *SendParentOrderParam {
+	var param SendParentOrderParam
+	param.Minute_to_expire = 43200
+	param.Time_in_force = "GTC"
+	param.Parameters = make([]ParentOrder, 0)
+	return &param
+}
+
+type SendParentOrderResponse struct {
+	Parent_order_acceptance_id string
+}
+
+func (client *Client) SendParentOrder(param *SendParentOrderParam) (*SendParentOrderResponse, error) {
+	for i, _ := range param.Parameters {
+		param.Parameters[i].Product_code = client.productCode
+	}
+	reqParam := requestParam{
+		path:        "/v1/me/sendparentorder",
+		method:      http.MethodPost,
+		isPrivate:   true,
+		queryString: "",
+	}
+
+	bodyJson, err := json.Marshal(param)
+	if err != nil {
+		log.Printf("error: %v\n", err)
+		return nil, err
+	}
+
+	reqParam.body = string(bodyJson)
+	respBody, err := client.do(reqParam)
+	if err != nil {
+		return nil, err
+	}
+
+	var result SendParentOrderResponse
 	if err := json.Unmarshal(*respBody, &result); err != nil {
 		log.Printf("error: %v\n", err)
 	}

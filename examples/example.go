@@ -24,7 +24,7 @@ func main() {
 		log.Fatal("Falied to new bitflyerclient")
 	}
 
-    param := bfapi.NewGetExecutionsParam()
+	param := bfapi.NewGetExecutionsParam()
 	param.Page.Count = 2
 	execs, err := client.GetExecutions(param)
 	if err != nil {

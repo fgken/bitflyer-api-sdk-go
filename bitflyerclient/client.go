@@ -23,8 +23,11 @@ const (
 )
 
 const (
-	MARKET = "MARKET"
-	LIMIT  = "LIMIT"
+	MARKET     = "MARKET"
+	LIMIT      = "LIMIT"
+	STOP       = "STOP"
+	STOP_LIMIT = "STOP_LIMIT"
+	TRAIL      = "TRAIL"
 )
 
 const (
