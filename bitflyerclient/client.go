@@ -4,10 +4,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	//	"encoding/json"
-	//	"errors"
-	//	"fmt"
-	//	"github.com/k0kubun/pp"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -20,19 +16,17 @@ const (
 	APIEndpointBase = "https://api.bitflyer.jp"
 )
 
+const (
+	BTC_JPY    = "BTC_JPY"
+	FX_BTC_JPY = "FX_BTC_JPY"
+)
+
 type Client struct {
 	apiKey       string
 	apiSecret    string
 	endpointBase string
 	httpClient   *http.Client
-}
-
-type requestParam struct {
-	path        string
-	method      string
-	isPrivate   bool
-	queryString string
-	body        string
+	productCode  string
 }
 
 func New(apiKey, apiSecret string) (*Client, error) {
@@ -41,8 +35,17 @@ func New(apiKey, apiSecret string) (*Client, error) {
 		apiSecret:    apiSecret,
 		endpointBase: APIEndpointBase,
 		httpClient:   http.DefaultClient,
+		productCode:  FX_BTC_JPY,
 	}
 	return c, nil
+}
+
+type requestParam struct {
+	path        string
+	method      string
+	isPrivate   bool
+	queryString string
+	body        string
 }
 
 func (client *Client) do(param requestParam) (*[]byte, error) {

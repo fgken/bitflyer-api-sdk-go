@@ -15,26 +15,47 @@ import (
  * ==============================
  */
 
+/* --- Page Nation --- */
 type Page struct {
-	Count  uint64
-	Before uint64
-	After  uint64
+	count  int64
+	before int64
+	after  int64
 }
 
-type ProductCode string
+func NewPage() *Page {
+	return &Page{
+		count:  -1,
+		before: -1,
+		after:  -1,
+	}
+}
 
-const (
-	BTC_JPY    ProductCode = "BTC_JPY"
-	FX_BTC_JPY ProductCode = "FX_BTC_JPY"
-)
+func (page *Page) SetCount(count int64) {
+	page.count = count
+}
 
-func addPage(values url.Values, page Page) url.Values {
-	values.Add("Count", strconv.FormatUint(page.Count, 10))
-	values.Add("Before", strconv.FormatUint(page.Before, 10))
-	values.Add("After", strconv.FormatUint(page.After, 10))
+func (page *Page) SetBefore(before int64) {
+	page.before = before
+}
+
+func (page *Page) SetAfter(after int64) {
+	page.after = after
+}
+
+func addPage(values url.Values, page *Page) url.Values {
+	if 0 <= page.count {
+		values.Add("count", strconv.FormatInt(page.count, 10))
+	}
+	if 0 <= page.before {
+		values.Add("before", strconv.FormatInt(page.before, 10))
+	}
+	if 0 <= page.after {
+		values.Add("after", strconv.FormatInt(page.after, 10))
+	}
 	return values
 }
 
+/* --- Parse Bitflyer's time format --- */
 type BitflyerTime struct {
 	time.Time
 }
@@ -52,6 +73,7 @@ func (bt *BitflyerTime) UnmarshalJSON(b []byte) (err error) {
  * ==============================
  */
 
+/* --- Execution History --- */
 type ResponseGetExecutions struct {
 	Id                        uint64
 	Child_order_id            string
@@ -63,13 +85,13 @@ type ResponseGetExecutions struct {
 	Child_order_acceptance_id string
 }
 
-func (client *Client) GetExecutions(code ProductCode, page Page) ([]ResponseGetExecutions, error) {
+func (client *Client) GetExecutions(page *Page) ([]ResponseGetExecutions, error) {
 	var param requestParam
 	param.path = "/v1/me/getexecutions"
 	param.method = http.MethodGet
 	param.isPrivate = true
 	queries := url.Values{}
-	queries.Add("product_code", string(code))
+	queries.Add("product_code", string(client.productCode))
 	queries = addPage(queries, page)
 	param.queryString = queries.Encode()
 
