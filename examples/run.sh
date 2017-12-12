@@ -8,4 +8,4 @@ if [ x"${1}" != x"" ]; then
     script="${1}"
 fi
 
-go run "${script}"
+go run "${script}" $2
