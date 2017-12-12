@@ -108,3 +108,10 @@ func (client *Client) GetParentOrderState(id string) (string, error) {
 
 	return "", fmt.Errorf("not found parent id: %v", id)
 }
+
+func (client *Client) GetChildOrdersByChildOrderId(id string) ([]GetChildOrdersResponse, error) {
+	param := NewGetChildOrdersParam()
+    param.Child_order_id = id
+	return client.GetChildOrders(param)
+}
+

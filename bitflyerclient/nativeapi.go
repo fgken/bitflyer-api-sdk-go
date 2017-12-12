@@ -146,6 +146,77 @@ func (client *Client) GetExecutions(param *GetExecutionsParam) ([]GetExecutionsR
 	return result, err
 }
 
+/* --- Get Child Orders --- */
+type GetChildOrdersParam struct {
+	Page Pagenation
+    Product_code string
+    Child_order_state string
+    Child_order_id string
+    Child_order_acceptance_id string
+    Parent_order_id string
+}
+
+func NewGetChildOrdersParam() *GetChildOrdersParam {
+	var param GetChildOrdersParam
+	param.Page.init()
+	return &param
+}
+
+type GetChildOrdersResponse struct {
+	Id                        int64
+	Child_order_id            string
+    Product_code              string
+    Child_order_type          string
+	Side                      string
+	Price                     float64
+    Average_price             float64
+	Size                      float64
+    Child_order_state         string
+    Expire_date               BitflyerTime
+    Child_order_date          BitflyerTime
+	Child_order_acceptance_id string
+    Outstanding_size          float64
+    Cancel_size               float64
+    Executed_size             float64
+    Total_commission          float64
+}
+
+func (client *Client) GetChildOrders(param *GetChildOrdersParam) ([]GetChildOrdersResponse, error) {
+	reqParam := requestParam{
+		path:      "/v1/me/getchildorders",
+		method:    http.MethodGet,
+		isPrivate: true,
+	}
+	queries := url.Values{}
+	queries.Add("product_code", string(client.productCode))
+	queries = addPagenation(queries, param.Page)
+    if param.Child_order_state != "" {
+        queries.Add("child_order_state", param.Child_order_state)
+    }
+    if param.Child_order_id != "" {
+        queries.Add("child_order_id", param.Child_order_id)
+    }
+    if param.Child_order_acceptance_id != "" {
+        queries.Add("child_order_acceptance_id", param.Child_order_acceptance_id)
+    }
+    if param.Parent_order_id != "" {
+        queries.Add("parent_order_id", param.Parent_order_id)
+    }
+	reqParam.queryString = queries.Encode()
+
+	respBody, err := client.do(reqParam)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]GetChildOrdersResponse, 0)
+	if err := json.Unmarshal(*respBody, &result); err != nil {
+		log.Printf("error: %v\n", err)
+	}
+
+	return result, err
+}
+
 /* --- Send a New Order --- */
 type SendChildOrderParam struct {
 	Product_code     string  `json:"product_code"`
